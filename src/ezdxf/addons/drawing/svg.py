@@ -248,6 +248,7 @@ class SVGRenderBackend(BackendInterface):
             stroke_opacity=stroke_opacity,
         )
         element.set("class", cls)
+        element.set("stroke", stroke_color)
 
     def add_filling(self, d: str, properties: BackendProperties):
         if not d:
@@ -256,6 +257,7 @@ class SVGRenderBackend(BackendInterface):
         fill_color, fill_opacity = self.resolve_color(properties.color)
         cls = self.styles.get_class(fill=fill_color, fill_opacity=fill_opacity)
         element.set("class", cls)
+        element.set("fill", fill_color)
 
     def resolve_color(self, color: Color) -> tuple[Color, float]:
         return color[:7], alpha_to_opacity(color[7:9])
