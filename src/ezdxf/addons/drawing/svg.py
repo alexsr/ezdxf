@@ -106,7 +106,7 @@ def make_view_box(page: layout.Page, output_coordinate_space: float) -> tuple[fl
     # if page.width > page.height:
     #     return size, size * (page.height / page.width)
     # return size * (page.width / page.height), size
-    return 1.0, 1.0
+    return page.width, page.height
 
 
 def scale_page_to_view_box(page: layout.Page, output_coordinate_space: float) -> float:
