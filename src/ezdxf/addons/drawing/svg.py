@@ -103,17 +103,18 @@ class SVGBackend(recorder.Recorder):
 
 def make_view_box(page: layout.Page, output_coordinate_space: float) -> tuple[int, int]:
     size = output_coordinate_space
-    if page.width > page.height:
-        return size, size * (page.height / page.width)
-    return size * (page.width / page.height), size
+    return size, size
+    # if page.width > page.height:
+    #     return size, size * (page.height / page.width)
+    # return size * (page.width / page.height), size
 
 
-def scale_page_to_view_box(page: layout.Page, output_coordinate_space: float) -> float:
-    # The viewBox coordinates are integer values in the range of [0, output_coordinate_space]
-    return min(
-        output_coordinate_space / page.width,
-        output_coordinate_space / page.height,
-    )
+# def scale_page_to_view_box(page: layout.Page, output_coordinate_space: float) -> float:
+#     # The viewBox coordinates are integer values in the range of [0, output_coordinate_space]
+#     return min(
+#         output_coordinate_space / page.width,
+#         output_coordinate_space / page.height,
+#     )
 
 
 class Styles:
