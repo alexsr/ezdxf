@@ -101,20 +101,20 @@ class SVGBackend(recorder.Recorder):
         return SVGRenderBackend(page, settings)
 
 
-def make_view_box(page: layout.Page, output_coordinate_space: float) -> tuple[int, int]:
+def make_view_box(page: layout.Page, output_coordinate_space: float) -> tuple[float, float]:
     size = output_coordinate_space
-    return size, size
     # if page.width > page.height:
     #     return size, size * (page.height / page.width)
     # return size * (page.width / page.height), size
+    return 1.0, 1.0
 
 
-# def scale_page_to_view_box(page: layout.Page, output_coordinate_space: float) -> float:
-#     # The viewBox coordinates are integer values in the range of [0, output_coordinate_space]
-#     return min(
-#         output_coordinate_space / page.width,
-#         output_coordinate_space / page.height,
-#     )
+def scale_page_to_view_box(page: layout.Page, output_coordinate_space: float) -> float:
+    # The viewBox coordinates are integer values in the range of [0, output_coordinate_space]
+    return min(
+        output_coordinate_space / page.width,
+        output_coordinate_space / page.height,
+    )
 
 
 class Styles:
@@ -156,15 +156,15 @@ class Styles:
         self._xml.append(style)
 
 
-CMD_M_ABS = "M {0.x:.14f} {0.y:.14f}"
-CMD_M_REL = "m {0.x:.14f} {0.y:.14f}"
-CMD_L_ABS = "L {0.x:.14f} {0.y:.14f}"
-CMD_L_REL = "l {0.x:.14f} {0.y:.14f}"
-CMD_C3_ABS = "Q {0.x:.14f} {0.y:.14f} {1.x:.14f} {1.y:.14f}"
-CMD_C3_REL = "q {0.x:.14f} {0.y:.14f} {1.x:.14f} {1.y:.14f}"
-CMD_C4_ABS = "C {0.x:.14f} {0.y:.14f} {1.x:.14f} {1.y:.14f} {2.x:.14f} {2.y:.14f}"
-CMD_C4_REL = "c {0.x:.14f} {0.y:.14f} {1.x:.14f} {1.y:.14f} {2.x:.14f} {2.y:.14f}"
-CMD_CONT = "{0.x:.14f} {0.y:.14f}"
+CMD_M_ABS = "M {0.x:g} {0.y:g}"
+CMD_M_REL = "m {0.x:g} {0.y:g}"
+CMD_L_ABS = "L {0.x:g} {0.y:g}"
+CMD_L_REL = "l {0.x:g} {0.y:g}"
+CMD_C3_ABS = "Q {0.x:g} {0.y:g} {1.x:g} {1.y:g}"
+CMD_C3_REL = "q {0.x:g} {0.y:g} {1.x:g} {1.y:g}"
+CMD_C4_ABS = "C {0.x:g} {0.y:g} {1.x:g} {1.y:g} {2.x:g} {2.y:g}"
+CMD_C4_REL = "c {0.x:g} {0.y:g} {1.x:g} {1.y:g} {2.x:g} {2.y:g}"
+CMD_CONT = "{0.x:g} {0.y:g}"
 
 
 class SVGRenderBackend(BackendInterface):
@@ -211,7 +211,7 @@ class SVGRenderBackend(BackendInterface):
             xmlns="http://www.w3.org/2000/svg",
             width=f"{page.width_in_mm:g}mm",
             height=f"{page.height_in_mm:g}mm",
-            viewBox=f"0 0 {view_box_width} {view_box_height}",
+            viewBox=f"0 0 {view_box_width:g} {view_box_height:g}",
         )
         self.styles = Styles(ET.SubElement(self.root, "def"))
         self.background = ET.SubElement(
@@ -220,8 +220,8 @@ class SVGRenderBackend(BackendInterface):
             fill="white",
             x="0",
             y="0",
-            width=str(view_box_width),
-            height=str(view_box_height),
+            width=f"{view_box_width:g}",
+            height=f"{view_box_height:g}",
         )
         self.entities = ET.SubElement(self.root, "g")
         self.entities.set("stroke-linecap", "round")
