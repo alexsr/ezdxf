@@ -41,7 +41,7 @@ class SVGBackend(recorder.Recorder):
         # DXF coordinates are mapped to integer viewBox coordinates in the first
         # quadrant, producing compact SVG files. The larger the coordinate range, the
         # more precise and the lager the files.
-        settings.output_coordinate_space = 1_000_000
+        settings.output_coordinate_space = 1.0
 
         # This player changes the original recordings!
         player = self.player()
@@ -102,10 +102,10 @@ class SVGBackend(recorder.Recorder):
 
 
 def make_view_box(page: layout.Page, output_coordinate_space: float) -> tuple[int, int]:
-    size = round(output_coordinate_space)
+    size = output_coordinate_space
     if page.width > page.height:
-        return size, round(size * (page.height / page.width))
-    return round(size * (page.width / page.height)), size
+        return size, size * (page.height / page.width)
+    return size * (page.width / page.height), size
 
 
 def scale_page_to_view_box(page: layout.Page, output_coordinate_space: float) -> float:
@@ -155,15 +155,15 @@ class Styles:
         self._xml.append(style)
 
 
-CMD_M_ABS = "M {0.x:.0f} {0.y:.0f}"
-CMD_M_REL = "m {0.x:.0f} {0.y:.0f}"
-CMD_L_ABS = "L {0.x:.0f} {0.y:.0f}"
-CMD_L_REL = "l {0.x:.0f} {0.y:.0f}"
-CMD_C3_ABS = "Q {0.x:.0f} {0.y:.0f} {1.x:.0f} {1.y:.0f}"
-CMD_C3_REL = "q {0.x:.0f} {0.y:.0f} {1.x:.0f} {1.y:.0f}"
-CMD_C4_ABS = "C {0.x:.0f} {0.y:.0f} {1.x:.0f} {1.y:.0f} {2.x:.0f} {2.y:.0f}"
-CMD_C4_REL = "c {0.x:.0f} {0.y:.0f} {1.x:.0f} {1.y:.0f} {2.x:.0f} {2.y:.0f}"
-CMD_CONT = "{0.x:.0f} {0.y:.0f}"
+CMD_M_ABS = "M {0.x:.14f} {0.y:.14f}"
+CMD_M_REL = "m {0.x:.14f} {0.y:.14f}"
+CMD_L_ABS = "L {0.x:.14f} {0.y:.14f}"
+CMD_L_REL = "l {0.x:.14f} {0.y:.14f}"
+CMD_C3_ABS = "Q {0.x:.14f} {0.y:.14f} {1.x:.14f} {1.y:.14f}"
+CMD_C3_REL = "q {0.x:.14f} {0.y:.14f} {1.x:.14f} {1.y:.14f}"
+CMD_C4_ABS = "C {0.x:.14f} {0.y:.14f} {1.x:.14f} {1.y:.14f} {2.x:.14f} {2.y:.14f}"
+CMD_C4_REL = "c {0.x:.14f} {0.y:.14f} {1.x:.14f} {1.y:.14f} {2.x:.14f} {2.y:.14f}"
+CMD_CONT = "{0.x:.14f} {0.y:.14f}"
 
 
 class SVGRenderBackend(BackendInterface):
@@ -199,18 +199,12 @@ class SVGRenderBackend(BackendInterface):
 
         # LineweightPolicy.RELATIVE:
         # max_stroke_width is determined as a certain percentage of settings.output_coordinate_space
-        self.max_stroke_width: int = int(
-            settings.output_coordinate_space * settings.max_stroke_width
-        )
+        self.max_stroke_width = settings.output_coordinate_space * settings.max_stroke_width
         # min_stroke_width is determined as a certain percentage of max_stroke_width
-        self.min_stroke_width: int = int(
-            self.max_stroke_width * settings.min_stroke_width
-        )
+        self.min_stroke_width =self.max_stroke_width * settings.min_stroke_width
         # LineweightPolicy.RELATIVE_FIXED:
         # all strokes have a fixed stroke-width as a certain percentage of max_stroke_width
-        self.fixed_stroke_width: int = int(
-            self.max_stroke_width * settings.fixed_stroke_width
-        )
+        self.fixed_stroke_width = self.max_stroke_width * settings.fixed_stroke_width
         self.root = ET.Element(
             "svg",
             xmlns="http://www.w3.org/2000/svg",
@@ -262,7 +256,7 @@ class SVGRenderBackend(BackendInterface):
     def resolve_color(self, color: Color) -> tuple[Color, float]:
         return color[:7], alpha_to_opacity(color[7:9])
 
-    def resolve_stroke_width(self, width: float) -> int:
+    def resolve_stroke_width(self, width: float) -> float:
         try:
             return self._stroke_width_cache[width]
         except KeyError:
@@ -274,7 +268,7 @@ class SVGRenderBackend(BackendInterface):
                 width = max(self.min_lineweight, width) * self.lineweight_scaling
             else:
                 width = self.min_lineweight
-            stroke_width = round(width * self.stroke_width_scale)
+            stroke_width = (width * self.stroke_width_scale)
         elif policy == LineweightPolicy.RELATIVE:
             stroke_width = map_lineweight_to_stroke_width(
                 width, self.min_stroke_width, self.max_stroke_width
@@ -411,12 +405,12 @@ def alpha_to_opacity(alpha: str) -> float:
 
 def map_lineweight_to_stroke_width(
     lineweight: float,
-    min_stroke_width: int,
-    max_stroke_width: int,
+    min_stroke_width: float,
+    max_stroke_width: float,
     min_lineweight=0.05,  # defined by DXF
     max_lineweight=2.11,  # defined by DXF
-) -> int:
+) -> float:
     """Map the DXF lineweight in mm to stroke-width in viewBox coordinates."""
     lineweight = max(min(lineweight, max_lineweight), min_lineweight) - min_lineweight
     factor = (max_stroke_width - min_stroke_width) / (max_lineweight - min_lineweight)
-    return min_stroke_width + round(lineweight * factor)
+    return min_stroke_width + (lineweight * factor)

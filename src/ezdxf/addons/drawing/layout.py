@@ -161,22 +161,22 @@ class Page:
     @property
     def width_in_mm(self) -> float:
         """Returns the page width in mm."""
-        return round(self.width * self.to_mm_factor, 1)
+        return self.width * self.to_mm_factor
 
     @property
     def max_width_in_mm(self) -> float:
         """Returns max page width in mm."""
-        return round(self.max_width * self.to_mm_factor, 1)
+        return self.max_width * self.to_mm_factor
 
     @property
     def height_in_mm(self) -> float:
         """Returns the page height in mm."""
-        return round(self.height * self.to_mm_factor, 1)
+        return self.height * self.to_mm_factor
 
     @property
     def max_height_in_mm(self) -> float:
         """Returns max page height in mm."""
-        return round(self.max_height * self.to_mm_factor, 1)
+        return self.max_height * self.to_mm_factor
 
     @property
     def margins_in_mm(self) -> Margins:
@@ -222,12 +222,12 @@ class Page:
     @classmethod
     def from_dxf_layout(cls, layout: DXFLayout) -> Self:
         # all layout measurements in mm
-        width = round(layout.dxf.paper_width, 1)
-        height = round(layout.dxf.paper_height, 1)
-        top = round(layout.dxf.top_margin, 1)
-        right = round(layout.dxf.right_margin, 1)
-        bottom = round(layout.dxf.bottom_margin, 1)
-        left = round(layout.dxf.left_margin, 1)
+        width = layout.dxf.paper_width
+        height = layout.dxf.paper_height
+        top = layout.dxf.top_margin
+        right = layout.dxf.right_margin
+        bottom = layout.dxf.bottom_margin
+        left = layout.dxf.left_margin
 
         rotation = layout.dxf.plot_rotation
         if rotation == 1:  # 90 degrees
@@ -327,9 +327,7 @@ class Settings:
         coordinates.
         """
         try:
-            return self.output_coordinate_space / max(
-                page.width_in_mm, page.height_in_mm
-            )
+            return 1.0
         except ZeroDivisionError:
             return 1.0
 
@@ -406,7 +404,7 @@ def final_page_size(content_size: Vec2, page: Page, settings: Settings) -> Page:
     width, height = limit_page_size(
         width, height, page.max_width_in_mm, page.max_height_in_mm
     )
-    return Page(round(width, 1), round(height, 1), Units.mm, margins)
+    return Page(width, height, Units.mm, margins)
 
 
 def limit_page_size(
