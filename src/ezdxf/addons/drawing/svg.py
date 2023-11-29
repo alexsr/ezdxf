@@ -54,18 +54,18 @@ class SVGBackend(recorder.Recorder):
         if page.width == 0 or page.height == 0:
             return ET.Element("svg")  # empty page
 
-        m = output_layout.get_placement_matrix(
-            page, settings=settings, top_origin=top_origin
-        )
-        # transform content to the output coordinates space:
-        player.transform(m)
-        if settings.crop_at_margins:
-            p1, p2 = page.get_margin_rect(top_origin=top_origin)  # in mm
-            # scale factor to map page coordinates to output space coordinates:
-            output_scale = settings.page_output_scale_factor(page)
-            max_sagitta = 0.1 * output_scale  # curve approximation 0.1 mm
-            # crop content inplace by the margin rect:
-            player.crop_rect(p1 * output_scale, p2 * output_scale, max_sagitta)
+        # m = output_layout.get_placement_matrix(
+        #     page, settings=settings, top_origin=top_origin
+        # )
+        # # transform content to the output coordinates space:
+        # player.transform(m)
+        # if settings.crop_at_margins:
+        #     p1, p2 = page.get_margin_rect(top_origin=top_origin)  # in mm
+        #     # scale factor to map page coordinates to output space coordinates:
+        #     output_scale = settings.page_output_scale_factor(page)
+        #     max_sagitta = 0.1 * output_scale  # curve approximation 0.1 mm
+        #     # crop content inplace by the margin rect:
+        #     player.crop_rect(p1 * output_scale, p2 * output_scale, max_sagitta)
 
         self._init_flip_y = False
         backend = self.make_backend(page, settings)
@@ -106,7 +106,7 @@ def make_view_box(page: layout.Page, output_coordinate_space: float) -> tuple[fl
     # if page.width > page.height:
     #     return size, size * (page.height / page.width)
     # return size * (page.width / page.height), size
-    return page.width, page.height
+    return page.width_in_mm, page.height_in_mm
 
 
 def scale_page_to_view_box(page: layout.Page, output_coordinate_space: float) -> float:

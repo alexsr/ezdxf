@@ -313,7 +313,7 @@ class Settings:
     # mapped, the range is [0, output_coordinate_space] for the larger page
     # dimension - aspect ratio is always preserved - these are CAD drawings!
     # The SVGBackend uses this feature to map all coordinates to integer values:
-    output_coordinate_space: float = 1_000_000  # e.g. for SVGBackend
+    output_coordinate_space: float = 1.0  # e.g. for SVGBackend
 
     def __post_init__(self) -> None:
         if self.content_rotation not in (0, 90, 180, 270):
@@ -448,12 +448,7 @@ def placement_matrix(
     """Returns a matrix to place the bbox in the first quadrant of the coordinate
     system (+x, +y).
     """
-    try:
-        scale_mm_to_vb = output_coordinate_space / max(
-            page.width_in_mm, page.height_in_mm
-        )
-    except ZeroDivisionError:
-        scale_mm_to_vb = 1.0
+    scale_mm_to_vb = 1.0
     margins = page.margins_in_mm
 
     # create scaling and rotation matrix:
