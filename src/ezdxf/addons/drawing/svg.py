@@ -49,7 +49,7 @@ class SVGBackend(recorder.Recorder):
             render_box = player.bbox()
 
         # the page origin (0, 0) is in the top-left corner.
-        output_layout = layout.Layout(render_box, flip_y=self._init_flip_y)
+        output_layout = layout.Layout(render_box, flip_y=False)
         page = output_layout.get_final_page(page, settings)
         if page.width == 0 or page.height == 0:
             return ET.Element("svg")  # empty page
