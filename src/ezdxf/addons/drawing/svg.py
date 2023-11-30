@@ -59,13 +59,13 @@ class SVGBackend(recorder.Recorder):
         )
         # transform content to the output coordinates space:
         player.transform(m)
-        # if settings.crop_at_margins:
-        #     p1, p2 = page.get_margin_rect(top_origin=top_origin)  # in mm
-        #     # scale factor to map page coordinates to output space coordinates:
-        #     output_scale = settings.page_output_scale_factor(page)
-        #     max_sagitta = 0.1 * output_scale  # curve approximation 0.1 mm
-        #     # crop content inplace by the margin rect:
-        #     player.crop_rect(p1 * output_scale, p2 * output_scale, max_sagitta)
+        if settings.crop_at_margins:
+            p1, p2 = page.get_margin_rect(top_origin=top_origin)  # in mm
+            # scale factor to map page coordinates to output space coordinates:
+            output_scale = settings.page_output_scale_factor(page)
+            max_sagitta = 0.1 * output_scale  # curve approximation 0.1 mm
+            # crop content inplace by the margin rect:
+            player.crop_rect(p1 * output_scale, p2 * output_scale, max_sagitta)
 
         self._init_flip_y = False
         backend = self.make_backend(page, settings)
@@ -105,16 +105,13 @@ def make_view_box(page: layout.Page, output_coordinate_space: float) -> tuple[fl
     size = output_coordinate_space
     # if page.width > page.height:
     #     return size, size * (page.height / page.width)
-    # return size * (page.width / page.height), size
-    return 1.0, 1.0
+    return page.width, page.height
+    # return 1.0, 1.0
 
 
 def scale_page_to_view_box(page: layout.Page, output_coordinate_space: float) -> float:
     # The viewBox coordinates are integer values in the range of [0, output_coordinate_space]
-    return min(
-        output_coordinate_space / page.width,
-        output_coordinate_space / page.height,
-    )
+    return 1.0
 
 
 class Styles:
@@ -156,15 +153,15 @@ class Styles:
         self._xml.append(style)
 
 
-CMD_M_ABS = "M {0.x:f} {0.y:f}"
-CMD_M_REL = "m {0.x:f} {0.y:f}"
-CMD_L_ABS = "L {0.x:f} {0.y:f}"
-CMD_L_REL = "l {0.x:f} {0.y:f}"
-CMD_C3_ABS = "Q {0.x:f} {0.y:f} {1.x:f} {1.y:f}"
-CMD_C3_REL = "q {0.x:f} {0.y:f} {1.x:f} {1.y:f}"
-CMD_C4_ABS = "C {0.x:f} {0.y:f} {1.x:f} {1.y:f} {2.x:f} {2.y:f}"
-CMD_C4_REL = "c {0.x:f} {0.y:f} {1.x:f} {1.y:f} {2.x:f} {2.y:f}"
-CMD_CONT = "{0.x:f} {0.y:f}"
+CMD_M_ABS = "M {0.x:.14f} {0.y:.14f}"
+CMD_M_REL = "m {0.x:.14f} {0.y:.14f}"
+CMD_L_ABS = "L {0.x:.14f} {0.y:.14f}"
+CMD_L_REL = "l {0.x:.14f} {0.y:.14f}"
+CMD_C3_ABS = "Q {0.x:.14f} {0.y:.14f} {1.x:.14f} {1.y:.14f}"
+CMD_C3_REL = "q {0.x:.14f} {0.y:.14f} {1.x:.14f} {1.y:.14f}"
+CMD_C4_ABS = "C {0.x:.14f} {0.y:.14f} {1.x:.14f} {1.y:.14f} {2.x:.14f} {2.y:.14f}"
+CMD_C4_REL = "c {0.x:.14f} {0.y:.14f} {1.x:.14f} {1.y:.14f} {2.x:.14f} {2.y:.14f}"
+CMD_CONT = "{0.x:.14f} {0.y:.14f}"
 
 
 class SVGRenderBackend(BackendInterface):
