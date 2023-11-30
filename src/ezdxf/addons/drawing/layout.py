@@ -357,24 +357,24 @@ class Layout:
         return content_size
 
     def get_final_page(self, page: Page, settings: Settings) -> Page:
-        rotation = self.get_rotation(settings)
-        content_size = self.get_content_size(rotation)
-        return final_page_size(content_size, page, settings)
+        # rotation = self.get_rotation(settings)
+        # content_size = self.get_content_size(rotation)
+        return final_page_size( page, settings)
 
     def get_placement_matrix(
         self, page: Page, settings=Settings(), top_origin=True
     ) -> Matrix44:
-        # Argument `page` has to be the resolved final page size!
+        # # Argument `page` has to be the resolved final page size!
         rotation = self.get_rotation(settings)
 
-        content_size = self.get_content_size(rotation)
-        content_size_mm = content_size * settings.scale
-        if settings.fit_page:
-            content_size_mm *= fit_to_page(content_size_mm, page)
-        try:
-            scale_dxf_to_mm = content_size_mm.x / content_size.x
-        except ZeroDivisionError:
-            scale_dxf_to_mm = 1.0
+        # content_size = self.get_content_size(rotation)
+        # content_size_mm = content_size * settings.scale
+        # if settings.fit_page:
+        #     content_size_mm *= fit_to_page(content_size_mm, page)
+        # try:
+        #     scale_dxf_to_mm = content_size_mm.x / content_size.x
+        # except ZeroDivisionError:
+        scale_dxf_to_mm = 1.0
         # map output coordinates to range [0, output_coordinate_space]
         scale_mm_to_output_space = settings.page_output_scale_factor(page)
         scale = scale_dxf_to_mm * scale_mm_to_output_space
@@ -391,19 +391,19 @@ class Layout:
         return m
 
 
-def final_page_size(content_size: Vec2, page: Page, settings: Settings) -> Page:
+def final_page_size(page: Page, settings: Settings) -> Page:
     scale = settings.scale
-    width = page.width_in_mm
-    height = page.height_in_mm
-    margins = page.margins_in_mm
-    if width == 0.0:
-        width = scale * content_size.x + margins.left + margins.right
-    if height == 0.0:
-        height = scale * content_size.y + margins.top + margins.bottom
+    width = page.width_in_mm * scale
+    height = page.height_in_mm * scale
+    margins = page.margins_in_mm * scale
+    # if width == 0.0:
+    #     width = scale * content_size.x + margins.left + margins.right
+    # if height == 0.0:
+    #     height = scale * content_size.y + margins.top + margins.bottom
 
-    width, height = limit_page_size(
-        width, height, page.max_width_in_mm, page.max_height_in_mm
-    )
+    # width, height = limit_page_size(
+    #     width, height, page.max_width_in_mm, page.max_height_in_mm
+    # )
     return Page(width, height, Units.mm, margins)
 
 

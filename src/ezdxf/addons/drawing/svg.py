@@ -49,23 +49,23 @@ class SVGBackend(recorder.Recorder):
             render_box = player.bbox()
 
         # the page origin (0, 0) is in the top-left corner.
-        output_layout = layout.Layout(render_box, flip_y=False)
+        output_layout = layout.Layout(render_box, flip_y=self._init_flip_y)
         page = output_layout.get_final_page(page, settings)
         if page.width == 0 or page.height == 0:
             return ET.Element("svg")  # empty page
 
-        # m = output_layout.get_placement_matrix(
-        #     page, settings=settings, top_origin=top_origin
-        # )
-        # # transform content to the output coordinates space:
-        # player.transform(m)
-        # if settings.crop_at_margins:
-        #     p1, p2 = page.get_margin_rect(top_origin=top_origin)  # in mm
-        #     # scale factor to map page coordinates to output space coordinates:
-        #     output_scale = settings.page_output_scale_factor(page)
-        #     max_sagitta = 0.1 * output_scale  # curve approximation 0.1 mm
-        #     # crop content inplace by the margin rect:
-        #     player.crop_rect(p1 * output_scale, p2 * output_scale, max_sagitta)
+        m = output_layout.get_placement_matrix(
+            page, settings=settings, top_origin=top_origin
+        )
+        # transform content to the output coordinates space:
+        player.transform(m)
+        if settings.crop_at_margins:
+            p1, p2 = page.get_margin_rect(top_origin=top_origin)  # in mm
+            # scale factor to map page coordinates to output space coordinates:
+            output_scale = settings.page_output_scale_factor(page)
+            max_sagitta = 0.1 * output_scale  # curve approximation 0.1 mm
+            # crop content inplace by the margin rect:
+            player.crop_rect(p1 * output_scale, p2 * output_scale, max_sagitta)
 
         self._init_flip_y = False
         backend = self.make_backend(page, settings)
@@ -106,7 +106,7 @@ def make_view_box(page: layout.Page, output_coordinate_space: float) -> tuple[fl
     # if page.width > page.height:
     #     return size, size * (page.height / page.width)
     # return size * (page.width / page.height), size
-    return page.width_in_mm, page.height_in_mm
+    return 1.0, 1.0
 
 
 def scale_page_to_view_box(page: layout.Page, output_coordinate_space: float) -> float:
@@ -156,15 +156,15 @@ class Styles:
         self._xml.append(style)
 
 
-CMD_M_ABS = "M {0.x:g} {0.y:g}"
-CMD_M_REL = "m {0.x:g} {0.y:g}"
-CMD_L_ABS = "L {0.x:g} {0.y:g}"
-CMD_L_REL = "l {0.x:g} {0.y:g}"
-CMD_C3_ABS = "Q {0.x:g} {0.y:g} {1.x:g} {1.y:g}"
-CMD_C3_REL = "q {0.x:g} {0.y:g} {1.x:g} {1.y:g}"
-CMD_C4_ABS = "C {0.x:g} {0.y:g} {1.x:g} {1.y:g} {2.x:g} {2.y:g}"
-CMD_C4_REL = "c {0.x:g} {0.y:g} {1.x:g} {1.y:g} {2.x:g} {2.y:g}"
-CMD_CONT = "{0.x:g} {0.y:g}"
+CMD_M_ABS = "M {0.x:f} {0.y:f}"
+CMD_M_REL = "m {0.x:f} {0.y:f}"
+CMD_L_ABS = "L {0.x:f} {0.y:f}"
+CMD_L_REL = "l {0.x:f} {0.y:f}"
+CMD_C3_ABS = "Q {0.x:f} {0.y:f} {1.x:f} {1.y:f}"
+CMD_C3_REL = "q {0.x:f} {0.y:f} {1.x:f} {1.y:f}"
+CMD_C4_ABS = "C {0.x:f} {0.y:f} {1.x:f} {1.y:f} {2.x:f} {2.y:f}"
+CMD_C4_REL = "c {0.x:f} {0.y:f} {1.x:f} {1.y:f} {2.x:f} {2.y:f}"
+CMD_CONT = "{0.x:f} {0.y:f}"
 
 
 class SVGRenderBackend(BackendInterface):
@@ -209,9 +209,9 @@ class SVGRenderBackend(BackendInterface):
         self.root = ET.Element(
             "svg",
             xmlns="http://www.w3.org/2000/svg",
-            width=f"{page.width_in_mm:g}mm",
-            height=f"{page.height_in_mm:g}mm",
-            viewBox=f"0 0 {view_box_width:g} {view_box_height:g}",
+            width=f"{page.width_in_mm:f}mm",
+            height=f"{page.height_in_mm:f}mm",
+            viewBox=f"0 0 {view_box_width:f} {view_box_height:f}",
         )
         self.styles = Styles(ET.SubElement(self.root, "def"))
         self.background = ET.SubElement(
@@ -220,8 +220,8 @@ class SVGRenderBackend(BackendInterface):
             fill="white",
             x="0",
             y="0",
-            width=f"{view_box_width:g}",
-            height=f"{view_box_height:g}",
+            width=f"{view_box_width:f}",
+            height=f"{view_box_height:f}",
         )
         self.entities = ET.SubElement(self.root, "g")
         self.entities.set("stroke-linecap", "round")
