@@ -59,13 +59,13 @@ class SVGBackend(recorder.Recorder):
         )
         # transform content to the output coordinates space:
         player.transform(m)
-        if settings.crop_at_margins:
-            p1, p2 = page.get_margin_rect(top_origin=top_origin)  # in mm
-            # scale factor to map page coordinates to output space coordinates:
-            output_scale = settings.page_output_scale_factor(page)
-            max_sagitta = 0.1 * output_scale  # curve approximation 0.1 mm
-            # crop content inplace by the margin rect:
-            player.crop_rect(p1 * output_scale, p2 * output_scale, max_sagitta)
+        # if settings.crop_at_margins:
+        #     p1, p2 = page.get_margin_rect(top_origin=top_origin)  # in mm
+        #     # scale factor to map page coordinates to output space coordinates:
+        #     output_scale = settings.page_output_scale_factor(page)
+        #     max_sagitta = 0.1 * output_scale  # curve approximation 0.1 mm
+        #     # crop content inplace by the margin rect:
+        #     player.crop_rect(p1 * output_scale, p2 * output_scale, max_sagitta)
 
         self._init_flip_y = False
         backend = self.make_backend(page, settings)
