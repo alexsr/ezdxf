@@ -221,6 +221,13 @@ class Page:
 
     @classmethod
     def from_dxf_layout(cls, layout: DXFLayout) -> Self:
+        """Returns the :class:`Page` based on the DXF attributes stored in the LAYOUT 
+        entity. The modelspace layout often **doesn't** have usable page settings!
+
+        Args:
+            layout: any paperspace layout or the modelspace layout
+
+        """
         # all layout measurements in mm
         width = layout.dxf.paper_width
         height = layout.dxf.paper_height
@@ -470,7 +477,7 @@ def placement_matrix(
     canvas = BoundingBox2d(corners)
 
     # shift content to first quadrant +x/+y
-    tx, ty = canvas.extmin  # type: ignore
+    tx, ty = canvas.extmin
 
     # align content within margins
     view_box_content_x = (

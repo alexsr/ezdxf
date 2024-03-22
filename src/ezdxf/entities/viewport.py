@@ -36,6 +36,7 @@ from ezdxf.tools import set_flag_state
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
+from .copy import default_copy
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
@@ -264,7 +265,7 @@ class Viewport(DXFGraphic):
         super().__init__()
         self._frozen_layers: list[str] = []
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         assert isinstance(entity, Viewport)
         entity._frozen_layers = list(self._frozen_layers)
 
@@ -636,8 +637,7 @@ class Viewport(DXFGraphic):
         return center_point
 
     def get_transformation_matrix(self) -> Matrix44:
-        """Returns the transformation matrix from modelspace to paperspace coordinates.
-        """
+        """Returns the transformation matrix from modelspace to paperspace coordinates."""
         # supports only top-view viewports!
         scale = self.get_scale()
         rotation_angle: float = self.dxf.view_twist_angle
@@ -674,7 +674,7 @@ class Viewport(DXFGraphic):
             frame = Vec2.list(((-w2, -h2), (w2, -h2), (w2, h2), (-w2, h2)))
             angle = math.radians(rotation_angle)
             bbox = BoundingBox2d(v.rotate(angle) + msp_center_point for v in frame)
-            return bbox.extmin.x, bbox.extmin.y, bbox.extmax.x, bbox.extmax.y  # type: ignore
+            return bbox.extmin.x, bbox.extmin.y, bbox.extmax.x, bbox.extmax.y
         else:
             mx, my, _ = msp_center_point
             return mx - w2, my - h2, mx + w2, my + h2

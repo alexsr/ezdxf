@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022, Manfred Moitzi
+# Copyright (c) 2019-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterator, Union, Iterable, Optional
@@ -249,6 +249,8 @@ class BaseLayout(_AbstractLayout):
             copy: if ``True`` copy entity from other document else unlink from
                 other document
 
+        Raises:
+            CopyNotSupported: copying of `entity` i not supported
         """
         foreign_doc = entity.doc
         dxftype = entity.dxftype()
@@ -289,9 +291,7 @@ class BaseLayout(_AbstractLayout):
         for entity in list(self):
             self.delete_entity(entity)
 
-    def move_to_layout(
-        self, entity: DXFGraphic, layout: BaseLayout
-    ) -> None:
+    def move_to_layout(self, entity: DXFGraphic, layout: BaseLayout) -> None:
         """Move entity to another layout.
 
         Args:
@@ -347,9 +347,7 @@ class BaseLayout(_AbstractLayout):
                 )
         return sortents_table
 
-    def set_redraw_order(
-        self, handles: Union[dict, Iterable[tuple[str, str]]]
-    ) -> None:
+    def set_redraw_order(self, handles: Union[dict, Iterable[tuple[str, str]]]) -> None:
         """If the header variable $SORTENTS `Regen` flag (bit-code value 16)
         is set, AutoCAD regenerates entities in ascending handles order.
 

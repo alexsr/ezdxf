@@ -16,6 +16,7 @@ from ezdxf.audit import AuditError, Auditor
 from ezdxf.lldxf.const import DXFInternalEzdxfError
 from ezdxf.entities import factory
 from ezdxf.query import EntityQuery
+from ezdxf.entities.copy import default_copy
 
 if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
@@ -170,7 +171,7 @@ class EntityDB:
         # Add sub entities ATTRIB, VERTEX and SEQEND to database:
         # Add linked MTEXT columns to database:
         if hasattr(entity, "add_sub_entities_to_entitydb"):
-            entity.add_sub_entities_to_entitydb(self)  # type: ignore
+            entity.add_sub_entities_to_entitydb(self)
 
     def delete_entity(self, entity: DXFEntity) -> None:
         """Remove `entity` from database and destroy the `entity`."""
@@ -182,7 +183,7 @@ class EntityDB:
         """Discard `entity` from database without destroying the `entity`."""
         if entity.is_alive:
             if hasattr(entity, "process_sub_entities"):
-                entity.process_sub_entities(lambda e: self.discard(e))  # type: ignore
+                entity.process_sub_entities(lambda e: self.discard(e))
 
             handle = entity.dxf.handle
             try:
@@ -198,17 +199,17 @@ class EntityDB:
         :meth:`~ezdxf.layouts.BaseLayout.add_entity`. DXF objects will
         automatically added to the OBJECTS section.
 
-        To import DXF entities from another drawing use the
-        :class:`~ezdxf.addons.importer.Importer` add-on.
-
         A new owner handle will be set by adding the duplicated entity to a
         layout.
+
+        Raises:
+            CopyNotSupported: copying of `entity` is not supported
 
         """
         doc = entity.doc
         assert doc is not None, "valid DXF document required"
         new_handle = self.next_handle()
-        new_entity: DXFEntity = entity.copy()
+        new_entity: DXFEntity = entity.copy(copy_strategy=default_copy)
         new_entity.dxf.handle = new_handle
         factory.bind(new_entity, doc)
         if isinstance(new_entity, DXFObject):

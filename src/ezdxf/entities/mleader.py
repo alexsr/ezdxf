@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2022, Manfred Moitzi
+# Copyright (c) 2018-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Union, Optional, Iterable, Any, Iterator
@@ -40,6 +40,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 
 from .factory import register_entity
 from .objectcollection import ObjectCollection
+from .copy import default_copy
 
 if TYPE_CHECKING:
     from ezdxf.audit import Auditor
@@ -323,7 +324,7 @@ class MultiLeader(DXFGraphic):
                     block_attribs[index] = attr._replace(text=new_text)
         return tags
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         """Copy leaders"""
         assert isinstance(entity, MultiLeader)
         entity.context = copy.deepcopy(self.context)
@@ -1375,7 +1376,7 @@ class MLeaderStyle(DXFObject):
         leader_type: int = 1,
     ):
         assert self.doc is not None, "valid DXF document required"
-        self.dxf.leader_line_color = colors.encode_raw_color(color)  # type: ignore
+        self.dxf.leader_line_color = colors.encode_raw_color(color)
         linetype_ = self.doc.linetypes.get(linetype)
         if linetype_ is None:
             raise ValueError(f"invalid linetype name '{linetype}'")

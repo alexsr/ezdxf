@@ -1,7 +1,9 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, Union, Iterable, Iterator
+from typing_extensions import Self
+
 import math
 import logging
 from ezdxf.audit import AuditError
@@ -36,6 +38,7 @@ from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 from .dimstyleoverride import DimStyleOverride
+from .copy import default_copy, CopyNotSupported
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace, DXFEntity, DimStyle
@@ -45,6 +48,7 @@ if TYPE_CHECKING:
     from ezdxf.query import EntityQuery
     from ezdxf.math import OCS
     from ezdxf import xref
+
 
 logger = logging.getLogger("ezdxf")
 ADSK_CONSTRAINTS = "*ADSK_CONSTRAINTS"
@@ -337,7 +341,7 @@ class OverrideMixin:
             if dxf_attr and dxf_attr.code > 0:
                 if dxf_attr.dxfversion > actual_dxfversion:
                     logger.debug(
-                        f'Unsupported DIMSTYLE attribute "{key}" for '  # type: ignore
+                        f'Unsupported DIMSTYLE attribute "{key}" for '
                         f"DXF version {self.doc.acad_release}"  # type: ignore
                     )
                     continue
@@ -482,18 +486,20 @@ class Dimension(DXFGraphic, OverrideMixin):
         # store the content of the geometry block for virtual entities
         self.virtual_block_content: Optional[EntitySpace] = None
 
-    def copy(self) -> Dimension:
-        virtual_copy = super().copy()
+    def copy(self, copy_strategy=default_copy) -> Dimension:
+        virtual_copy = super().copy(copy_strategy=copy_strategy)
         # The new virtual copy can not reference the same geometry block as the
         # original dimension entity:
         virtual_copy.dxf.discard("geometry")
-        return virtual_copy  # type: ignore
+        return virtual_copy
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         assert isinstance(entity, Dimension)
         if self.virtual_block_content:
             # another copy of a virtual entity:
-            virtual_content = EntitySpace(e.copy() for e in self.virtual_block_content)
+            virtual_content = EntitySpace(
+                copy_strategy.copy(e) for e in self.virtual_block_content
+            )
         else:
             # entity is a new virtual copy of self and can not share the same
             # geometry block to be independently transformable:
@@ -502,10 +508,6 @@ class Dimension(DXFGraphic, OverrideMixin):
             # to the insert location:
             entity.dxf.discard("insert")
         entity.virtual_block_content = virtual_content
-
-    def copy_external(self) -> Dimension:
-        # virtual content is not required
-        return self.raw_copy()  # type: ignore
 
     def post_bind_hook(self):
         """Called after binding a virtual dimension entity to a document.
@@ -517,7 +519,7 @@ class Dimension(DXFGraphic, OverrideMixin):
         doc = self.doc
         if self.virtual_block_content and doc is not None:
             # create a new geometry block:
-            block = self.doc.blocks.new_anonymous_block(type_char="D")
+            block = doc.blocks.new_anonymous_block(type_char="D")
             # move virtual block content to the new geometry block:
             for entity in self.virtual_block_content:
                 block.add_entity(entity)
@@ -806,13 +808,13 @@ class Dimension(DXFGraphic, OverrideMixin):
         insert = self.dxf.get("insert", None)
         if insert:
             transform = True
-            insert = ocs.to_wcs(insert)
+            insert = Vec3(ocs.to_wcs(insert))
             m = Matrix44.translate(insert.x, insert.y, insert.z)
 
         for entity in self._block_content():
             try:
-                copy = entity.copy()
-            except DXFTypeError:
+                copy = entity.copy(copy_strategy=default_copy)
+            except CopyNotSupported:
                 continue
 
             if ocs.transform:
@@ -822,7 +824,6 @@ class Dimension(DXFGraphic, OverrideMixin):
                 ocs_to_wcs(copy, dim_elevation)
 
             if transform:
-                # noinspection PyUnboundLocalVariable
                 copy.transform(m)
             yield copy
 
@@ -976,7 +977,7 @@ class ArcDimension(Dimension):
         )
         self.dxf.dimtype = dimtype  # restore original dimtype
 
-    def transform(self, m: Matrix44) -> Dimension:
+    def transform(self, m: Matrix44) -> Self:
         """Transform the ARC_DIMENSION entity by transformation matrix `m` inplace.
 
         Raises ``NonUniformScalingError()`` for non uniform scaling.
@@ -1045,7 +1046,7 @@ class RadialDimensionLarge(Dimension):
             ["chord_point", "override_center", "jog_point", "unknown2"],
         )
 
-    def transform(self, m: Matrix44) -> Dimension:
+    def transform(self, m: Matrix44) -> Self:
         """Transform the LARGE_RADIAL_DIMENSION entity by transformation matrix
         `m` inplace.
 
@@ -1212,8 +1213,8 @@ def linear_measurement(
         # angle in WCS xy-plane
         measurement_direction = Vec3.from_angle(angle)
 
-    t1 = measurement_direction.project(p1)  # type: ignore
-    t2 = measurement_direction.project(p2)  # type: ignore
+    t1 = measurement_direction.project(p1)
+    t2 = measurement_direction.project(p2)
     return (t2 - t1).magnitude
 
 

@@ -9,6 +9,7 @@ from ezdxf.lldxf.const import (
     DXFKeyError,
     DXFValueError,
     DXFTypeError,
+    DXFStructureError,
 )
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -22,6 +23,7 @@ from ezdxf.audit import AuditError
 from ezdxf.entities import factory, DXFGraphic
 from .dxfentity import base_class, SubclassProcessor, DXFEntity
 from .dxfobj import DXFObject
+from .copy import default_copy, CopyNotSupported
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace, XRecord
@@ -98,7 +100,7 @@ class Dictionary(DXFObject):
         self._data: dict[str, Union[str, DXFObject]] = dict()
         self._value_code = VALUE_CODE
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         """Copy hard owned entities but do not store the copies in the entity
         database, this is a second step (factory.bind), this is just real copying.
         """
@@ -106,7 +108,21 @@ class Dictionary(DXFObject):
         entity._value_code = self._value_code
         if self.dxf.hard_owned:
             # Reactors are removed from the cloned DXF objects.
-            entity._data = {key: entity.copy() for key, entity in self.items()}
+            data: dict[str, DXFEntity] = dict()
+            for key, ent in self.items():
+                # ignore strings and None - these entities do not exist
+                # in the entity database
+                if isinstance(ent, DXFEntity):
+                    try:  # todo: follow CopyStrategy.ignore_copy_errors_in_linked entities
+                        data[key] = ent.copy(copy_strategy=copy_strategy)
+                    except CopyNotSupported:
+                        if copy_strategy.settings.ignore_copy_errors_in_linked_entities:
+                            logger.warning(
+                                f"copy process ignored {str(ent)} - this may cause problems in AutoCAD"
+                            )
+                        else:
+                            raise
+            entity._data = data  # type: ignore
         else:
             entity._data = dict(self._data)
 
@@ -117,6 +133,8 @@ class Dictionary(DXFObject):
             return handle_mapping
 
         for key, entity in self.items():
+            if not isinstance(entity, DXFEntity):
+                continue
             copied_entry = clone.get(key)
             if copied_entry:
                 handle_mapping[entity.dxf.handle] = copied_entry.dxf.handle
@@ -130,6 +148,8 @@ class Dictionary(DXFObject):
             return
         data = dict()
         for key, entity in self.items():
+            if not isinstance(entity, DXFEntity):
+                continue
             entity_copy = mapping.get_reference_of_copy(entity.dxf.handle)
             if entity_copy:
                 data[key] = entity
@@ -471,7 +491,11 @@ class Dictionary(DXFObject):
         dxf_dict = self.get(key)
         if dxf_dict is None:
             dxf_dict = self.add_new_dict(key, hard_owned=hard_owned)
-        return dxf_dict  # type: ignore
+        elif not isinstance(dxf_dict, Dictionary):
+            raise DXFStructureError(
+                f"expected a DICTIONARY entity, got {str(dxf_dict)} for key: {key}"
+            )
+        return dxf_dict
 
     def audit(self, auditor: Auditor) -> None:
         if not self.is_alive:
@@ -529,7 +553,8 @@ class DictionaryWithDefault(Dictionary):
         super().__init__()
         self._default: Optional[DXFObject] = None
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+        super().copy_data(entity, copy_strategy=copy_strategy)
         assert isinstance(entity, DictionaryWithDefault)
         entity._default = self._default
 

@@ -35,6 +35,7 @@ from .mtext import (
     acdb_mtext,
 )
 from .factory import register_entity
+from .copy import default_copy
 
 if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
@@ -217,7 +218,7 @@ class BaseAttrib(Text):
         self._xrecord: Optional[Tags] = None
         self._embedded_mtext: Optional[EmbeddedMText] = None
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         """Copy entity data, xrecord data and embedded MTEXT are not stored
         in the entity database.
         """
@@ -415,7 +416,7 @@ def _update_location_from_mtext(text: Text, mtext: MText) -> None:
         ocs = OCS(extrusion)
         insert = ocs.from_wcs(insert)
         dxf.extrusion = extrusion.normalize()
-        dxf.rotation = ocs.from_wcs(text_direction).angle_deg  # type: ignore
+        dxf.rotation = ocs.from_wcs(text_direction).angle_deg
 
     dxf.insert = insert
     dxf.align_point = insert  # the same point for all MTEXT alignments!

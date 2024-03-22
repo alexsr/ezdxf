@@ -1,27 +1,117 @@
-## Version 1.1.3b2 - beta
+## Version 1.3.0 - dev
+id:: 65e30c28-021e-4c24-ab6e-a9e9fa7c6a51
+	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
+	- moved static setup data from `setup.py` to `pyproject.toml`
+	- REMOVE: `pp` command, use `browse` command to explore DXF files
+	- NEW: `GeoJSONBackend` for the `drawing` add-on
+	- NEW: `CustomJSONBackend` for the `drawing` add-on
+	- NEW: property override functions are managed as a stack, that allows multiple override functions
+		- `Frontend.push_property_override_function()`
+		- `Frontend.pop_property_override_function()`
+		- The `Frontend.override_properties()` method is the first function on this stack, so there is no need to adapt existing code.
+	- NEW: math utility functions with pure-Python and Cython implementations
+		- `ezdxf.math.world_mercator_to_gps()`
+		- `ezdxf.math.gps_to_world_mercator()`
+	- NEW: `ezdxf.revcloud` module to render revision clouds similar to the `REVCLOUD` command in CAD applications
+	- NEW: `ezdxf.select` module for location based entity selection
+	- CHANGE: class `RenderContext` accepts ctb files as instances of `acadctb.ColorDependentPlotStyles`
+	-
+- ## Version 1.2.0 - 2024-03-02
+  id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
+	- ((658c0484-28db-436e-b828-8fc509ecbd29))
+	- NEW: `ezdxf` requires Python 3.9 or newer
+	- NEW: support for the [[SPATIAL_FILTER]] entity.
+		- This is the basic requirement to support clipping of block references and XREFs aka the [[XCLIP]] command in CAD applications
+	- NEW: `ezdxf.xclip` module for adding 2D clipping paths to block references and XREFs
+		- replicates the [[XCLIP]] command
+	- NEW: support for the [[IMAGE]] entity in the [[drawing add-on]], added by [[mbway]]
+		- {{pr 999}}
+		- supported by these backends:
+			- [[PyQtBackend]]
+			- [[MatplotlibBackend]]
+			- [[PyMuPdfBackend]]
+	- NEW: the `ezdxf draw` command supports additional backends by option `--backend {matplotlib,qt,mupdf,custom_svg}`, added by [[mbway]]
+	- NEW: `ezdxf.colors.RGBA` class
+	- NEW: support for font-name synonyms, find macOS fonts on Windows/Linux and vice vesa
+		- {{discussion 1002}}
+	- NEW: additional font search directory added for macOS `/System/Library/Fonts/` by [[ru4ert]]
+		- {{pr 1004}}
+		- the cache version number has been increased so that the fontmanger-cache is automatically rebuilt
+	- NEW: `MeshBuilder.render_3dsolid()`, create [[3DSOLID]] entities from simple polyhedrons (experimental)
+	- NEW: `Auditor` fixes non-existing linetypes in layers, replaced by `Continuous`
+		- {{discussion 1018}}
+	- NEW: export and load DXF documents as JSON encoded tags
+		- `ezdxf.document.export_json_tags()`
+		- `ezdxf.document.load_json_tags()`
+	- CHANGE: renamed `Image.boundray_path_ocs()` to `Image.pixel_boundary_path()`
+	- CHANGE: refactoring of the [[RecorderBackend]]
+	- CHANGE: replaced `ezdxf.math.linspace` by `numpy.linspace`
+	- CHANGE: replaced functions `gauss_jordan_solver()`, `gauss_jordan_inverse()`, `gauss_vector_solver()` and `gauss_matrix_solver()` by a `numpy` based solution
+		- moved replaced functions to module `ezdxf.math.legacy`
+	- CHANGE: replaced `LUDecomposition` class by `NumpySolver` class
+		- moved `LUDecomposition` to module `ezdxf.math.legacy`
+	- CHANGE: `MeshData.vertices` has to be a list of `Vec3`
+	- CHANGE: renamed `ClippingPolygon2d` to `ConvexClippingPolygon2d`
+	- CHANGE: The Cython extensions have been reverted to pure Cython code and removed low-level C++ classes to make it easier to maintain, but with a small performance penalty.
+	- REMOVE: untested and incorrect implementation of `ezdxf.math.BezierSurface`
+	- BUGFIX: Restore lost links between `LAYOUT` and `BLOCK_RECORD` entities
+		- {{issue 997}}
+	- BUGFIX: `NumpyPath2d` could contain 3d vertices
+		- {{issue 1003}}
+	- BUGFIX: DXF attribute `invisible` wasn't exported
+		- {{issue 1040}}
+	- BUGFIX: catch exceptions of the `draw` command when required dependencies are not installed
+-
+- ## Version 1.1.4 - 2023-12-24
+  id:: 6568dc88-ce84-4f46-b490-43768c491a2b
+	- ((654f4c9f-8a29-4ad8-a581-2784df172d0d))
+	- CHANGE: rework of the copy process of DXF entities.
+		- The copy process ignores by default copy errors of linked entities.
+		- This may help to process more [[AutoCAD]] files by the [[ezdxf.xref]] module, but can also make DXF documents unreadable for [[AutoCAD]].
+	- BUGFIX: find [[ProxyGraphic]] in [[ACAD_PROXY_ENTITY]] for any DXF version
+		- {{issue 978}}
+	- CHANGE: use system default font in [[drawing add-on]]
+	- BUGFIX: `ConstructionCircle.intersect_circle()` by [[hu-xiaonan]]
+		- {{pr 982}}
+	- BUGFIX: ResourceWarning about unclosed file on POSIX by [[danofsteel32]]
+		- {{pr 985}}
+	- BUGFIX: `MTEXT` column rendering issue
+		- {{issue 986}}
+	- BUGFIX: catch exception raised by `fontTools`
+		- {{issue 990}}
+	- BUGFIX: invalid return value in `read_bit_double_default()`
+		- {{issue 991}}
+	- BUGFIX: use document encoding to decode text in [[ProxyGraphic]]
+		- {{issue 991}}
+	- BUGFIX: the first letter of a layer name can be an asterisk `*`
+		- {{discussion 995}}
+	-
+	-
+- ## Version 1.1.3 - 2023-11-25
+  id:: 65604fb6-9254-4146-abb1-4e93f6adfddc
 	- ((654f4c9f-8a29-4ad8-a581-2784df172d0d))
 	  id:: 654f4c9f-23cb-44c7-af4e-74d9d73b70f2
-	- CHANGE: [#956](https://github.com/mozman/ezdxf/issues/956)
-	  added a safety factor of 1.01 to [[MTEXT]] size estimation, a "too precise" measurement causes sometimes unwanted line wraps
+	- CHANGE: added a safety factor of 1.01 to [[MTEXT]] size estimation, a "too precise" measurement causes sometimes unwanted line wraps
+		- {{issue 956}}
 	- NEW: the `strip` command can remove handles from DXF R12 and older files
 	- BUGFIX: tests ignore fonts in support dirs; including this dirs caused problems on systems with partially installed [[SHX]] fonts
-	- CHANGE: [#966](https://github.com/mozman/ezdxf/pull/966)
-	  `ezdxf.entities.dxfgfx.get_font_name()` to correctly handle implicitly-styled [[TEXT]] entities, contributed  by [[neiljackson1984]]
-	- BUGFIX: [#965](https://github.com/mozman/ezdxf/pull/965)
-	  fixed typo in `ezdxf.path.rect()`, contributed  by [[neiljackson1984]]
-	- BUGFIX: [#967](https://github.com/mozman/ezdxf/discussions/967)
-	- `make_font()` function didn't find fonts with uppercase extensions like `.SHX`
+	- CHANGE: `ezdxf.entities.dxfgfx.get_font_name()` to correctly handle implicitly-styled [[TEXT]] entities, contributed  by [[neiljackson1984]]
+		- {{pr 966}}
+	- BUGFIX: fixed typo in `ezdxf.path.rect()`, contributed  by [[neiljackson1984]]
+		- {{pr 965}}
+	- BUGFIX: `make_font()` function didn't find fonts with uppercase extensions like `.SHX`
+		- {{discussion 967}}
 	-
 - ## Version 1.1.2 - 2023-11-01
   id:: 654fc008-346e-4d67-bde5-2ca9af3bf86b
 	- ((654f4c9f-8a29-4ad8-a581-2784df172d0d))
-	- CHANGE: [#936](https://github.com/mozman/ezdxf/issues/936)
-	  improve [[modelspace]] extents updates
-	- BUGFIX: [#939](https://github.com/mozman/ezdxf/issues/939)
-	  [[Matplotlib]] requires oriented outer paths and holes to draw correct filled paths
+	- CHANGE: improve [[modelspace]] extents updates
+		- {{issue 936}}
+	- BUGFIX: [[Matplotlib]] requires oriented outer paths and holes to draw correct filled paths
+		- {{issue 936}}
 	- BUGFIX: transform embedded [[MTEXT]] entity in [[ATTRIB]] and [[ATTDEF]] entities
-	- BUGFIX: [#949](https://github.com/mozman/ezdxf/issues/949)
-	  fixed [[PyMuPDF]] deprecated method names, requires [[PyMuPDF]] 1.20.0 or newer
+	- BUGFIX: fixed [[PyMuPDF]] deprecated method names, requires [[PyMuPDF]] 1.20.0 or newer
+		- {{issue 949}}
 	-
 - ## Version 1.1.1 - 2023-10-08
   id:: 654fc008-39f0-48af-b636-8074c874c109
@@ -37,10 +127,10 @@
 		- [[PlotterBackend]]
 	- NEW: support for decoding of [[MIF]] encoded text `\M+cxxxx` by the [[recover]] module
 	- INFO: [[numpy]] v1.25 has stopped providing Python 3.8 binary wheels on PyPI
-	- BUGFIX: [#929](https://github.com/mozman/ezdxf/issues/929)
-	  handling of the minimum hatch line distance
-	- BUGFIX: [#932](https://github.com/mozman/ezdxf/issues/932)
-	  tolerate [[MIF]] encoding `\M+cxxxx` in table names
+	- BUGFIX: handling of the minimum hatch line distance
+		- {{issue 929}}
+	- BUGFIX: tolerate [[MIF]] encoding `\M+cxxxx` in table names
+		- {{issue 932}}
 	-
 - ## Version 1.1.0 - 2023-09-09
   id:: 654fc008-fba9-4937-a84e-2f3e2d9bd9a2
@@ -66,8 +156,7 @@
 	- NEW: added setter to `BlockLayout.base_point` property
 	- NEW: `ezdxf.entities.acad_table_to_block()` function, converts a [[ACAD_TABLE]] entity 
 	  to an [[INSERT]] entity
-	- NEW: `ACADProxyEntity.explode()` method, to explode [[ACAD_PROXY_ENTITY]] into proxy 
-	  graphic entities
+	- NEW: `ACADProxyEntity.explode()` method, to explode [[ACAD_PROXY_ENTITY]] into [[ProxyGraphic]] entities
 	- CHANGED: moved font related modules into a new subpackage `ezdxf.fonts` 
 	  including a big refactoring
 	- CHANGED: [[FontFace]] class
@@ -84,14 +173,14 @@
 	- REMOVED: `Pillow` backend and the `pillow` command
 	- REMOVED: `geomdl` test dependency
 	- BUGFIX: invalid bulge to Bezier curve conversion for bulge values >= 1
-	- BUGFIX: [#855](https://github.com/mozman/ezdxf/issues/855)
-	  scale [[MTEXT]] and [[MLEADER]] inline commands "absolute text height" at transformation
-	- BUGFIX: [#898](https://github.com/mozman/ezdxf/issues/898)
-	  use `dimclrd` color for dimension arrow blocks
-	- BUGFIX: [#906](https://github.com/mozman/ezdxf/issues/906)
-	  linetype and fill flag parsing for proxy graphics
-	- BUGFIX: [#907](https://github.com/mozman/ezdxf/issues/907)
-	  fix [[ATTRIB]] and [[ATTDEF]] handling of version- and lock_position tags which share the same group code 280 in the same subclass
+	- BUGFIX: scale [[MTEXT]] and [[MLEADER]] inline commands "absolute text height" at transformation
+		- {{issue 855}}
+	- BUGFIX: use `dimclrd` color for dimension arrow blocks
+		- {{issue 898}}
+	- BUGFIX: linetype and fill flag parsing for proxy graphics
+		- {{issue 906}}
+	- BUGFIX: fix [[ATTRIB]] and [[ATTDEF]] handling of version- and lock_position tags which share the same group code 280 in the same subclass
+		- {{issue 907}}
 	-
 - ## Version 1.0.3 - 2023-03-26
 	- ((654fc008-931d-4836-93ce-994fd8a347e0))
@@ -230,7 +319,7 @@
 	- NEW: support for layer attribute override in VIEWPORT entities
 	- NEW: mesh exchange add-on `ezdxf.addons.meshex`: STL, OFF, and OBJ mesh loader and STL, OFF, OBJ, PLY, OpenSCAD and IFC4 mesh exporter, [docs](https://ezdxf.mozman.at/docs/addons/meshex.html)
 	- NEW: `ezdxf.addons.openscad` add-on as interface to [OpenSCAD](https://openscad.org), [docs](https://ezdxf.mozman.at/docs/addons/openscad.html)
-	- NEW: `acis` module, a toolbox to handle ACIS data, [docs](https://ezdxf.mozman.at/docs/tools/acis.html)
+	- NEW: `acis` module, a toolbox to handle ACIS data, [docs](https://ezdxf.mozman.at/docs/acis.html)
 	- NEW: factory function `add_helix()` to create new `HELIX` entities
 	- NEW: precise bounding box calculation for Bezier curves
 	- NEW: module `ezdxf.math.trianglation` for polygon triangulation with hole support
